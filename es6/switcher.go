@@ -14,11 +14,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v6/esapi"
 )
 
-type Switcher interface {
-	Name() string
-	Switch(ctx context.Context, retention int) error
-}
-
 type switcher struct {
 	client *elasticsearch.Client
 	alias  string

@@ -16,10 +16,6 @@ type IndexerConfig struct {
 	OnIndexSuccess func(string)
 }
 
-type Indexer interface {
-	Index(ctx context.Context, id string, doc []byte) error
-}
-
 type indexer struct {
 	bi             esutil.BulkIndexer
 	onIndexFailure func(string, error)
