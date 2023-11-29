@@ -12,7 +12,7 @@ import (
 	"log"
 
 	"github.com/elastic/go-elasticsearch/v6"
-	"github.com/ugent-library/index"
+	"github.com/ugent-library/index/es6"
 )
 
 func main() {
