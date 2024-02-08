@@ -10,42 +10,48 @@ import (
 	"github.com/elastic/go-elasticsearch/v6/esutil"
 )
 
+var DefaultFlushInterval = 1 * time.Second
+
 type IndexerConfig struct {
 	OnError        func(error)
 	OnIndexFailure func(string, error)
 	OnIndexSuccess func(string)
+	// FlushInterval defaults to 1 second.
+	FlushInterval time.Duration
 }
 
-type indexer struct {
+type Indexer struct {
 	bi             esutil.BulkIndexer
 	onIndexFailure func(string, error)
 	onIndexSuccess func(string)
 }
 
-func NewIndexer(client *elasticsearch.Client, index string, config IndexerConfig) (*indexer, error) {
+func NewIndexer(client *elasticsearch.Client, index string, config IndexerConfig) (*Indexer, error) {
+	if config.FlushInterval == 0 {
+		config.FlushInterval = DefaultFlushInterval
+	}
+
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client:        client,
 		Index:         index,
-		FlushInterval: 1 * time.Second,
+		FlushInterval: config.FlushInterval,
 		Refresh:       "true",
 		OnError: func(ctx context.Context, err error) {
-			err = fmt.Errorf("index error: %w", err)
-			config.OnError(err)
+			config.OnError(fmt.Errorf("index error: %w", err))
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &indexer{
+	return &Indexer{
 		bi:             bi,
 		onIndexFailure: config.OnIndexFailure,
 		onIndexSuccess: config.OnIndexSuccess,
 	}, nil
 }
 
-func (b *indexer) Index(ctx context.Context, id string, doc []byte) error {
+func (b *Indexer) Index(ctx context.Context, id string, doc []byte) error {
 	err := b.bi.Add(
 		ctx,
 		esutil.BulkIndexerItem{
@@ -71,6 +77,6 @@ func (b *indexer) Index(ctx context.Context, id string, doc []byte) error {
 	return err
 }
 
-func (b *indexer) Close(ctx context.Context) error {
+func (b *Indexer) Close(ctx context.Context) error {
 	return b.bi.Close(ctx)
 }
