@@ -14,13 +14,13 @@ import (
 	"github.com/elastic/go-elasticsearch/v6/esapi"
 )
 
-type switcher struct {
+type Switcher struct {
 	client *elasticsearch.Client
 	alias  string
 	index  string
 }
 
-func NewSwitcher(client *elasticsearch.Client, alias, settings string) (*switcher, error) {
+func NewSwitcher(client *elasticsearch.Client, alias, settings string) (*Switcher, error) {
 	index := fmt.Sprintf("%s_%s", alias, time.Now().UTC().Format("20060102150405"))
 
 	body := strings.NewReader(settings)
@@ -34,18 +34,18 @@ func NewSwitcher(client *elasticsearch.Client, alias, settings string) (*switche
 		return nil, fmt.Errorf("%+v", res)
 	}
 
-	return &switcher{
+	return &Switcher{
 		client: client,
 		alias:  alias,
 		index:  index,
 	}, nil
 }
 
-func (is *switcher) Name() string {
+func (is *Switcher) Name() string {
 	return is.index
 }
 
-func (is *switcher) Switch(ctx context.Context, retention int) error {
+func (is *Switcher) Switch(ctx context.Context, retention int) error {
 	actions := []map[string]any{
 		{
 			"add": map[string]string{
@@ -96,7 +96,7 @@ func (is *switcher) Switch(ctx context.Context, retention int) error {
 	return nil
 }
 
-func (is *switcher) oldIndices(ctx context.Context) ([]string, error) {
+func (is *Switcher) oldIndices(ctx context.Context) ([]string, error) {
 	req := esapi.CatIndicesRequest{
 		Format: "json",
 	}
